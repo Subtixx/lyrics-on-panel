@@ -36,8 +36,10 @@ PlasmoidItem {
     property int position: mpris2Model.currentPlayer?.position ?? 0
 
     preferredRepresentation: fullRepresentation // Otherwise it will only display your icon declared in the metadata.json file
-    Layout.preferredWidth: config_preferedWidgetWidth;
+    Layout.preferredWidth: config_preferredWidgetWidth;
     Layout.preferredHeight: lyricText.contentHeight;
+
+    Plasmoid.status: mpris2Model.currentPlayer?.canControl || !config_hideItemWhenNoControlChecked ? PlasmaCore.Types.ActiveStatus : PlasmaCore.Types.HiddenStatus;
     
     width: 0;
     height: lyricText.contentHeight;
@@ -50,7 +52,7 @@ PlasmoidItem {
         font.bold: config_lyricTextBold
         font.italic: config_lyricTextItalic
         anchors.right: parent.right
-        anchors.rightMargin: 6 * (config_mediaControllItemSize + config_mediaControllSpacing)
+        anchors.rightMargin: 6 * (config_mediaControlItemSize + config_mediaControlSpacing)
         anchors.verticalCenter: parent.verticalCenter
         anchors.verticalCenterOffset: config_lyricTextVerticalOffset
     }
@@ -60,14 +62,15 @@ PlasmoidItem {
         anchors.right: parent.right
         anchors.rightMargin: 1 //10
         anchors.verticalCenter: parent.verticalCenter
-        width: 5 * config_mediaControllItemSize + 4 * config_mediaControllSpacing
-        height: config_mediaControllItemSize
-        anchors.verticalCenterOffset: config_mediaControllItemVerticalOffset
+        width: 5 * config_mediaControlItemSize + 4 * config_mediaControlSpacing
+        height: config_mediaControlItemSize
+        anchors.verticalCenterOffset: config_mediaControlItemVerticalOffset
+        visible: config_showMediaControls
 
         Image {
             source: backwardIcon
-            sourceSize.width: config_mediaControllItemSize //不能用width, 锯齿太严重，直接控制图片渲染svg的大小
-            sourceSize.height: config_mediaControllItemSize
+            sourceSize.width: config_mediaControlItemSize //不能用width, 锯齿太严重，直接控制图片渲染svg的大小
+            sourceSize.height: config_mediaControlItemSize
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
 
@@ -81,10 +84,10 @@ PlasmoidItem {
 
         Image {
             source: (playbackStatus == 2 && !isWrongPlayer()) ? pauseIcon : playIcon
-            sourceSize.width: config_mediaControllItemSize
-            sourceSize.height: config_mediaControllItemSize
+            sourceSize.width: config_mediaControlItemSize
+            sourceSize.height: config_mediaControlItemSize
             anchors.left: parent.left
-            anchors.leftMargin: config_mediaControllItemSize + config_mediaControllSpacing
+            anchors.leftMargin: config_mediaControlItemSize + config_mediaControlSpacing
             anchors.verticalCenter: parent.verticalCenter
 
             MouseArea {
@@ -101,10 +104,10 @@ PlasmoidItem {
 
         Image {
             source: forwardIcon
-            sourceSize.width: config_mediaControllItemSize
-            sourceSize.height: config_mediaControllItemSize
+            sourceSize.width: config_mediaControlItemSize
+            sourceSize.height: config_mediaControlItemSize
             anchors.left: parent.left
-            anchors.leftMargin: 2 * (config_mediaControllItemSize + config_mediaControllSpacing)
+            anchors.leftMargin: 2 * (config_mediaControlItemSize + config_mediaControlSpacing)
             anchors.verticalCenter: parent.verticalCenter
 
             MouseArea {
@@ -116,33 +119,14 @@ PlasmoidItem {
         }
 
         Image {
-            source: liked ? likedIcon : likeIcon
-            sourceSize.width: config_mediaControllItemSize
-            sourceSize.height: config_mediaControllItemSize
-            anchors.left: parent.left
-            anchors.leftMargin: 3 * (config_mediaControllItemSize + config_mediaControllSpacing)
-            anchors.verticalCenter: parent.verticalCenter
-
-            MouseArea {
-                anchors.fill: parent
-                onClicked: {
-                    if (liked) {
-                        liked = false;
-                    } else {
-                        liked = true;
-                    }
-                }
-            }
-        }
-
-        Image {
             id: mediaPlayerIcon
-            source: config_yesPlayMusicChecked ? cloudMusicIcon : spotifyIcon
-            sourceSize.width: config_mediaControllItemSize
-            sourceSize.height: config_mediaControllItemSize
+            source: getMediaPlayerIcon()
+            sourceSize.width: config_mediaControlItemSize
+            sourceSize.height: config_mediaControlItemSize
             anchors.left: parent.left
-            anchors.leftMargin: 4 * (config_mediaControllItemSize + config_mediaControllSpacing)
+            anchors.leftMargin: 4 * (config_mediaControlItemSize + config_mediaControlSpacing)
             anchors.verticalCenter: parent.verticalCenter
+            visible: config_showMediaLogo
 
             MouseArea {
                 anchors.fill: parent
@@ -152,7 +136,7 @@ PlasmoidItem {
                     //     lyricsWTimes.clear();
                     //     lyricText.text = currentMediaTitle + " - " + currentMediaArtists;
                     // } else {
-                    //     if (config_yesPlayMusicChecked) {
+                    //     if (config_mediaType == 1) {
                     //         isYPMLyricFound = false;
                     //     } else {
                     //         isCompatibleLRCFound = false;
@@ -162,7 +146,7 @@ PlasmoidItem {
                     
                     // Temporarily remove in v1.1.3
                     // [v1.1.3] Click spotify icon => swtich display mode. 
-                    if (config_yesPlayMusicChecked) {
+                    if (config_mediaType == 1) {
                         menuDialog.x = globalPos.x;
                         menuDialog.y = globalPos.y * 3.5;
                         if (!dialogShowed) { //苯办法了，后面看下怎么判定失去焦点
@@ -198,16 +182,15 @@ PlasmoidItem {
         //     console.log("entered");
         // } //用mouseArea做试试
 
-        width: column.implicitWidth
-        height: column.implicitHeight
-
         Column {
+            width: implicitWidth
+            height: implicitHeight
             spacing: 5
 
             PlasmaComponents.MenuItem {
                 id: userInfoMenuItem
                 visible: true
-                text: ypmLogined ? ypmUserName : i18n("登录")
+                text: ypmLogined ? ypmUserName : i18n("Login")
 
                 onTriggered: {
                     if (!ypmLogined) {
@@ -413,20 +396,26 @@ PlasmoidItem {
     property string playIcon: config_whiteMediaControlIconsChecked ? "../assets/media-play-white.svg" : "../assets/media-play.svg"
     property bool liked: false;
 
-    // config page variable
-    property bool config_yesPlayMusicChecked: Plasmoid.configuration.yesPlayMusicChecked;
-    property bool config_spotifyChecked: Plasmoid.configuration.spotifyChecked;
-    property bool config_compatibleModeChecked: Plasmoid.configuration.compatibleModeChecked;
+    property int config_mediaType: Plasmoid.configuration.mediaType;
+
+    // media control variables
+    property bool config_showMediaControls: Plasmoid.configuration.showMediaControls;
+    property bool config_showMediaLogo: Plasmoid.configuration.showMediaLogo;
+    property int config_mediaControlSpacing: Plasmoid.configuration.mediaControlSpacing
+    property int config_mediaControlItemSize: Plasmoid.configuration.mediaControlItemSize
+    property int config_mediaControlItemVerticalOffset: Plasmoid.configuration.mediaControlItemVerticalOffset;
+    property int config_whiteMediaControlIconsChecked: Plasmoid.configuration.whiteMediaControlIconsChecked;
+    property bool config_hideItemWhenNoControlChecked: Plasmoid.configuration.hideItemWhenNoControlChecked;
+
+    // lyric settings
     property int config_lyricTextSize: Plasmoid.configuration.lyricTextSize;
     property string config_lyricTextColor: Plasmoid.configuration.lyricTextColor;
     property bool config_lyricTextBold: Plasmoid.configuration.lyricTextBold;
     property bool config_lyricTextItalic: Plasmoid.configuration.lyricTextItalic;
-    property int config_mediaControllSpacing: Plasmoid.configuration.mediaControllSpacing
-    property int config_mediaControllItemSize: Plasmoid.configuration.mediaControllItemSize
-    property int config_mediaControllItemVerticalOffset: Plasmoid.configuration.mediaControllItemVerticalOffset;
     property int config_lyricTextVerticalOffset: Plasmoid.configuration.lyricTextVerticalOffset
-    property int config_whiteMediaControlIconsChecked: Plasmoid.configuration.whiteMediaControlIconsChecked;
-    property int config_preferedWidgetWidth: Plasmoid.configuration.preferedWidgetWidth;
+    
+    // misc
+    property int config_preferredWidgetWidth: Plasmoid.configuration.preferredWidgetWidth;
 
     //Other Media Player's mpris2 data
     property int mprisCurrentPlayingSongTimeMS: {
@@ -471,9 +460,9 @@ PlasmoidItem {
 
     // 0: ypm   1: spotify 2: compatible
     property string currExpectedPlayerName: {
-        if (config_yesPlayMusicChecked) {
+        if (config_mediaType == 1) {
             return "yesplaymusic";
-        } else if (config_spotifyChecked) {
+        } else if (config_mediaType == 2) {
             return "spotify";
         } else {
             return "compatible";
@@ -531,16 +520,19 @@ PlasmoidItem {
         var xhr = new XMLHttpRequest();
         xhr.open("GET", ypm_base_url + "/api/lyric?id=" + currentMediaYPMId);
         xhr.onreadystatechange = function() {
-            if (xhr.status === 200) {
-                var response = JSON.parse(xhr.responseText);
-                //console.log("YPM Network OK");
-                if (response && response.lrc && response.lrc.lyric) {
-                    lyricsWTimes.clear();
-                    //console.log("Successfully fetched YPM lyrics");
-                    isYPMLyricFound = true;
-                    parseLyric(response.lrc.lyric);
-                    //parseAndUpload(response.lrc.lyric);
-                }
+            if(xhr.status !== 200) {
+                console.log("Failed to get the lyrics. Error code: " + xhr.status);
+                return;
+            }
+            
+            var response = JSON.parse(xhr.responseText);
+            //console.log("YPM Network OK");
+            if (response && response.lrc && response.lrc.lyric) {
+                lyricsWTimes.clear();
+                //console.log("Successfully fetched YPM lyrics");
+                isYPMLyricFound = true;
+                parseLyric(response.lrc.lyric);
+                //parseAndUpload(response.lrc.lyric);
             }
         };
         xhr.send();
@@ -563,11 +555,12 @@ PlasmoidItem {
         var lrcList = lyrics.split("\n");
         for (var i = 0; i < lrcList.length; i++) {
             var lyricPerRowWTime = lrcList[i].split("]");
-            if (lyricPerRowWTime.length > 1) {
-                var timestamp = parseTime(lyricPerRowWTime[0].replace("[", "").trim());
-                var lyricPerRow = lyricPerRowWTime[1].trim();
-                lyricsWTimes.append({time: timestamp, lyric: lyricPerRow});
+            if(lyricPerRowWTime.length < 2) {
+                continue;
             }
+            var timestamp = parseTime(lyricPerRowWTime[0].replace("[", "").trim());
+            var lyricPerRow = lyricPerRowWTime[1].trim();
+            lyricsWTimes.append({time: timestamp, lyric: lyricPerRow});
         }
         lyricDisplayTimer.start()
     }
@@ -577,34 +570,47 @@ PlasmoidItem {
         //console.log("Entered fetchlyrics compatible mode.");
         xhr.open("GET", lrcQueryUrl);
         xhr.onreadystatechange = function() {
-            if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
-                //console.log("[Compatible Mode] Network OK!");
-                if ((currentMediaTitle !== "Advertisement") && !isCompatibleLRCFound) { //Advertisement
-                    //console.log("Start parsing fetch result.");
-                    if (!xhr.responseText || xhr.responseText === "[]") {
-                        //console.log("[Compatible Mode] Failed to get the lyrics.");
-                        queryFailed = true;
-                        previousLrcId = Number.MIN_VALUE;
-                        lyricsWTimes.clear();
-                        lyricText.text = lrc_not_exists;
-                    } else {
-                        var response = JSON.parse(xhr.responseText)
-                        queryFailed = false;
-                        if (response && response.length > 0 && previousLrcId !== response[0].id.toString()) { //会出现 Spotify传给Mpris的歌曲名 与 lrclib中的歌曲名不一样的情况，改用id判断
-                            lyricsWTimes.clear();
-                            //console.log("[Compatible Mode] Get the desired lyric!");
-                            previousMediaTitle = currentMediaTitle;
-                            previousMediaArtists = currentMediaArtists;
-                            previousLrcId = response[0].id.toString();
-                            isCompatibleLRCFound = true;
-                            parseLyric(response[0].syncedLyrics);
-                        } else {
-                            lyricsWTimes.clear();
-                            lyricText.text = lrc_not_exists;
-                        }
-                    }
-                }      
+            if(xhr.readyState !== XMLHttpRequest.DONE) {
+                return;
             }
+            
+            if(xhr.status !== 200) {
+                console.log("Failed to get the lyrics. Error code: " + xhr.status);
+                queryFailed = true;
+                return;
+            }
+            
+            if(currentMediaTitle === "Advertisement") {
+                return;
+            }
+
+            if(isCompatibleLRCFound) {
+                return;
+            }
+
+            //console.log("Start parsing fetch result.");
+            if (!xhr.responseText || xhr.responseText === "[]") {
+                //console.log("[Compatible Mode] Failed to get the lyrics.");
+                queryFailed = true;
+                previousLrcId = Number.MIN_VALUE;
+                lyricsWTimes.clear();
+                lyricText.text = lrc_not_exists;
+            } else {
+                var response = JSON.parse(xhr.responseText)
+                queryFailed = false;
+                if (response && response.length > 0 && previousLrcId !== response[0].id.toString()) { //会出现 Spotify传给Mpris的歌曲名 与 lrclib中的歌曲名不一样的情况，改用id判断
+                    lyricsWTimes.clear();
+                    //console.log("[Compatible Mode] Get the desired lyric!");
+                    previousMediaTitle = currentMediaTitle;
+                    previousMediaArtists = currentMediaArtists;
+                    previousLrcId = response[0].id.toString();
+                    isCompatibleLRCFound = true;
+                    parseLyric(response[0].syncedLyrics);
+                } else {
+                    lyricsWTimes.clear();
+                    lyricText.text = lrc_not_exists;
+                }
+            }      
         };
         xhr.send();
     }
@@ -651,6 +657,16 @@ PlasmoidItem {
             }
         } 
         return false;
+    }
+
+    function getMediaPlayerIcon() {
+        if (config_mediaType == 1) {
+            return cloudMusicIcon;
+        } else if (config_mediaType == 2) {
+            return spotifyIcon;
+        } else {
+            return playIcon;
+        }
     }
 
     function reset() {

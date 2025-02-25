@@ -9,35 +9,75 @@ Kirigami.FormLayout {
     id: generalPage
     signal configurationChanged
 
-    property alias cfg_yesPlayMusicChecked: yesPlayMusicPropriataryRadioButton.checked 
-    property alias cfg_spotifyChecked: spotifyPropriataryRadioButton.checked   
-    property alias cfg_compatibleModeChecked: compatibleModeRadioButton.checked
+    property alias cfg_mediaType: mediaTypeComboBox.currentIndex
+
+    // Media Controls Settings
+    property alias cfg_showMediaLogo: showMediaLogoCheckBox.checked
+    property alias cfg_showMediaControls: showMediaControlsCheckBox.checked
+    property alias cfg_mediaControlSpacing: mediaControlSpacingSpinBox.value
+    property alias cfg_mediaControlItemSize: mediaControlItemSizeSpinBox.value
+    property alias cfg_mediaControlItemVerticalOffset: mediaControlItemVerticalOffsetSpinBox.value
+    property alias cfg_whiteMediaControlIconsChecked: whiteMediaControlIconsChecked.checked
+    property alias cfg_hideItemWhenNoControlChecked: hideItemWhenNoControlChecked.checked
+
+    // Lyrics Settings
     property alias cfg_lyricTextSize: lyricTextSizeSpinBox.value 
     property alias cfg_lyricTextColor: lyricTextColorButton.color
     property alias cfg_lyricTextBold: boldButton.checked   
     property alias cfg_lyricTextItalic: italicButton.checked 
     property alias cfg_lyricTextVerticalOffset: lyricTextVerticalOffsetSpinBox.value
-    property alias cfg_mediaControllSpacing: mediaControllSpacingSpinBox.value
-    property alias cfg_mediaControllItemSize: mediaControllItemSizeSpinBox.value
-    property alias cfg_mediaControllItemVerticalOffset: mediaControllItemVerticalOffsetSpinBox.value
-    property alias cfg_whiteMediaControlIconsChecked: whiteMediaControlIconsChecked.checked
-    property alias cfg_preferedWidgetWidth: preferedWidgetWidthTextField.text
+    
+    // Misc Settings
+    property alias cfg_preferredWidgetWidth: preferredWidgetWidthTextField.text
 
-    QQC2.RadioButton {
-        id: yesPlayMusicPropriataryRadioButton
-        Kirigami.FormData.label: i18n("Modes: ")
-        text: i18n("YesPlayMusic(YPM)")
+    QQC2.ComboBox {
+        id: mediaTypeComboBox
+        model: ["Global", "YesPlayMusic", "Spotify"]
+        Kirigami.FormData.label: i18n("Media Type: ")
     }
 
-    QQC2.RadioButton {
-        id: spotifyPropriataryRadioButton
-        text: i18n("Spotify")
+    // Media Controls Settings
+
+    QQC2.CheckBox {
+        id: showMediaLogoCheckBox
+        Kirigami.FormData.label: i18n("Show Logo: ")
+        checkable: true
     }
 
-    QQC2.RadioButton {
-        id: compatibleModeRadioButton
-        text: i18n("Global (currently broken)")
+    QQC2.CheckBox {
+        id: showMediaControlsCheckBox
+        Kirigami.FormData.label: i18n("Show Media Controls: ")
+        checkable: true
     }
+
+    QQC2.CheckBox {
+        id: hideItemWhenNoControlChecked
+        Kirigami.FormData.label: i18n("Hide Item When No Control: ")
+        checkable: true
+    }
+
+    QQC2.CheckBox {
+        id: whiteMediaControlIconsChecked
+        Kirigami.FormData.label: i18n("White Media Control Icons: ")
+        checkable: true
+    }
+
+    QQC2.SpinBox {
+        id: mediaControlSpacingSpinBox
+        Kirigami.FormData.label: i18n("Media control items spacing: ")
+    }
+
+    QQC2.SpinBox {
+        id: mediaControlItemSizeSpinBox
+        Kirigami.FormData.label: i18n("Media control items size: ")
+    }
+
+    QQC2.SpinBox {
+        id: mediaControlItemVerticalOffsetSpinBox
+        Kirigami.FormData.label: i18n("Media control items vertical offset: ")
+    }
+
+    // Lyrics Settings
 
     QQC2.SpinBox {
         id: lyricTextSizeSpinBox
@@ -47,21 +87,6 @@ Kirigami.FormLayout {
     QQC2.SpinBox {
         id: lyricTextVerticalOffsetSpinBox
         Kirigami.FormData.label: i18n("Lyric text vertical offset: ")
-    }
-
-    QQC2.SpinBox {
-        id: mediaControllSpacingSpinBox
-        Kirigami.FormData.label: i18n("Media control items spacing: ")
-    }
-
-    QQC2.SpinBox {
-        id: mediaControllItemSizeSpinBox
-        Kirigami.FormData.label: i18n("Media control items size: ")
-    }
-
-    QQC2.SpinBox {
-        id: mediaControllItemVerticalOffsetSpinBox
-        Kirigami.FormData.label: i18n("Media control items vertical offset: ")
     }
     
     QQLayouts.RowLayout {
@@ -90,15 +115,9 @@ Kirigami.FormLayout {
         }
     }
 
-    QQC2.CheckBox {
-        id: whiteMediaControlIconsChecked
-        Kirigami.FormData.label: i18n("White Media Control Icons: ")
-        checkable: true
-    }
-
     QQC2.TextField {
-        id: preferedWidgetWidthTextField
-        Kirigami.FormData.label: i18n("Prefered Widget Width: ")
+        id: preferredWidgetWidthTextField
+        Kirigami.FormData.label: i18n("Preferred Widget Width: ")
     }
 
     // trackName	true	string	Title of the track
