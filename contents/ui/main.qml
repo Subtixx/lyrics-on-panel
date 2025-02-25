@@ -52,7 +52,7 @@ PlasmoidItem {
         font.bold: config_lyricTextBold
         font.italic: config_lyricTextItalic
         anchors.right: parent.right
-        anchors.rightMargin: 6 * (config_mediaControlItemSize + config_mediaControlSpacing)
+        anchors.rightMargin: config_showMediaControls ? 6 * (config_mediaControlItemSize + config_mediaControlSpacing) : 0
         anchors.verticalCenter: parent.verticalCenter
         anchors.verticalCenterOffset: config_lyricTextVerticalOffset
     }
